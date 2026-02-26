@@ -1,0 +1,9 @@
+openai
+pyyaml
+requests
+arxiv
+beautifulsoup4
+tenacity
+pandas
+numpy
+tqdm
