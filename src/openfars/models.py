@@ -118,6 +118,13 @@ class DeepSeekHarnessBackend(Backend):
                 "DSH_MODEL": route.model,
                 "DSH_SYSTEM_PROMPT": messages[0].get("content", "") if messages else "",
             }
+            permission_mode = str(route.extra.get("permission_mode", "workspace-write"))
+            if permission_mode not in {"workspace-write", "danger-full-access"}:
+                raise ModelError(
+                    "DeepSeek Harness permission_mode must be workspace-write or "
+                    "danger-full-access"
+                )
+            updates["DSH_PERMISSION_MODE"] = permission_mode
             if route.api_key_env and route.api_key_env != "DEEPSEEK_API_KEY":
                 value = os.getenv(route.api_key_env)
                 if not value:
@@ -249,6 +256,10 @@ class MockBackend(Backend):
                     "contradictions": ["Reported gains may depend on unmatched compute"],
                     "gaps": ["Mechanism-level ablations are missing"],
                     "opportunities": ["Test the bottleneck with a minimal intervention"],
+                    "query_expansions": [
+                        "mechanism-level ablation matched compute",
+                        "information bottleneck causal intervention",
+                    ],
                     "evidence_ids": [],
                 }
             )

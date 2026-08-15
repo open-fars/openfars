@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,6 +16,7 @@ def test_deepseek_harness_reuses_entered_client(tmp_path, monkeypatch):
         def __init__(self, **kwargs):
             self.kwargs = kwargs
             self.runs = []
+            self.permissions = []
             self.exits = 0
             created.append(self)
 
@@ -26,6 +28,7 @@ def test_deepseek_harness_reuses_entered_client(tmp_path, monkeypatch):
 
         def run(self, prompt, session_id):
             self.runs.append((prompt, session_id))
+            self.permissions.append(os.environ.get("DSH_PERMISSION_MODE"))
             return SimpleNamespace(final_response=f"done-{len(self.runs)}")
 
     monkeypatch.setitem(
@@ -55,4 +58,5 @@ def test_deepseek_harness_reuses_entered_client(tmp_path, monkeypatch):
     assert (first, second) == ("done-1", "done-2")
     assert len(created) == 1
     assert created[0].runs == [("one", "experimenter"), ("two", "experimenter")]
+    assert created[0].permissions == ["workspace-write", "workspace-write"]
     assert created[0].exits == 1

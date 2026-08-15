@@ -132,6 +132,11 @@ class MediaConfig:
     enabled: bool = True
     podcast: bool = True
     video: bool = True
+    podcast_render_command: List[str] = field(default_factory=list)
+    video_render_command: List[str] = field(default_factory=list)
+    podcast_output: str = "media/podcast/podcast.wav"
+    video_output: str = "media/video/video.mp4"
+    render_timeout: int = 3600
 
 
 @dataclass(frozen=True)
@@ -298,6 +303,19 @@ class OpenFARSConfig:
             enabled=bool(media_raw.get("enabled", True)),
             podcast=bool(media_raw.get("podcast", True)),
             video=bool(media_raw.get("video", True)),
+            podcast_render_command=_string_list(
+                media_raw.get("podcast_render_command", []),
+                "media.podcast_render_command",
+            ),
+            video_render_command=_string_list(
+                media_raw.get("video_render_command", []),
+                "media.video_render_command",
+            ),
+            podcast_output=str(
+                media_raw.get("podcast_output", "media/podcast/podcast.wav")
+            ),
+            video_output=str(media_raw.get("video_output", "media/video/video.mp4")),
+            render_timeout=max(1, int(media_raw.get("render_timeout", 3600))),
         )
         leaderboard_raw = raw.get("leaderboards") or {}
         default_leaderboards = LeaderboardConfig()
@@ -396,8 +414,18 @@ class OpenFARSConfig:
             raise ValueError(f"Unknown human checkpoints: {', '.join(unknown_checkpoints)}")
         if self.execution.enabled and self.execution.agent not in self.agents:
             raise ValueError(f"Unknown execution agent: {self.execution.agent}")
+        result_path = Path(self.execution.result_file)
+        if result_path.is_absolute() or ".." in result_path.parts:
+            raise ValueError("execution.result_file must stay inside the project workspace")
         if self.execution.target and self.execution.target not in self.compute:
             raise ValueError(f"Unknown compute target: {self.execution.target}")
+        for label, value in (
+            ("media.podcast_output", self.media.podcast_output),
+            ("media.video_output", self.media.video_output),
+        ):
+            media_path = Path(value)
+            if media_path.is_absolute() or ".." in media_path.parts:
+                raise ValueError(f"{label} must stay inside the project workspace")
         if self.web.host != "127.0.0.1":
             raise ValueError(
                 "web.host must be 127.0.0.1; use an authenticated reverse proxy for remote access"
@@ -438,3 +466,11 @@ class OpenFARSConfig:
         )
         updated.validate()
         return updated
+
+
+def _string_list(value: Any, label: str) -> List[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ValueError(f"{label} must be a YAML list of command arguments")
+    return [str(item) for item in value]

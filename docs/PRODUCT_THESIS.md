@@ -34,7 +34,8 @@ shareable artifact**.
    than model confidence to validate novelty.
 2. **Human gradients, not human transcript reading.** Ask about frontier choices, anomalies,
    evaluator disagreement and high-value information. Store feedback as an immutable decision and
-   route it only to affected downstream stages.
+   route it only to affected downstream stages. A `revise` decision resamples the heterogeneous
+   idea frontier under that gradient while retaining the previous frontier for audit.
 3. **Real work.** Literature retrieval, durable code agents, SSH GPU execution, bounded failure
    iteration, deterministic charts, evidence-locked papers, media packages and reproducible
    release objects live in one workflow.

@@ -15,6 +15,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from .config import OpenFARSConfig
 from .human import HumanDecisionRequired, write_decision
+from .leaderboards import LeaderboardSubscriber
 from .models import ModelRouter
 from .orchestrator import ResearchOrchestrator
 from .release import ReleaseBuilder
@@ -67,6 +68,25 @@ class WebControlPlane:
                 }
             )
         return sorted(projects, key=lambda item: item["updated_at"], reverse=True)
+
+    def model_registry(self) -> Dict[str, Any]:
+        snapshot = LeaderboardSubscriber(self.config).status()
+        return {
+            "policy": "advisory_only_no_silent_route_changes",
+            "routes": [
+                {
+                    "name": route.name,
+                    "backend": route.backend,
+                    "model": route.model,
+                }
+                for route in self.config.models.values()
+            ],
+            "refreshed_at": snapshot.get("refreshed_at"),
+            "sources": [
+                {"name": item.get("name"), "status": item.get("status")}
+                for item in snapshot.get("sources", [])
+            ],
+        }
 
     def project(self, project_id: str) -> Dict[str, Any]:
         workspace = self._workspace(project_id, must_exist=True)
@@ -224,6 +244,9 @@ class OpenFARSRequestHandler(BaseHTTPRequestHandler):
             if parts == ["api", "projects"]:
                 self._json({"projects": self.control.list_projects()})
                 return
+            if parts == ["api", "models"]:
+                self._json(self.control.model_registry())
+                return
             if len(parts) == 3 and parts[:2] == ["api", "projects"]:
                 self._json(self.control.project(parts[2]))
                 return
@@ -365,6 +388,7 @@ class OpenFARSWebServer(ThreadingHTTPServer):
 
 def serve(config: OpenFARSConfig, *, open_browser: Optional[bool] = None) -> None:
     server = OpenFARSWebServer(config)
+    _refresh_leaderboards_async(config)
     host, port = server.server_address[:2]
     url = f"http://{host}:{port}"
     print(f"OpenFARS WebUI: {url}")
@@ -378,6 +402,22 @@ def serve(config: OpenFARSConfig, *, open_browser: Optional[bool] = None) -> Non
     finally:
         server.shutdown()
         server.server_close()
+
+
+def _refresh_leaderboards_async(config: OpenFARSConfig) -> Optional[threading.Thread]:
+    if not config.leaderboards.enabled:
+        return None
+
+    def refresh() -> None:
+        try:
+            LeaderboardSubscriber(config).refresh()
+        except Exception:
+            # The control plane remains usable offline; the snapshot exposes feed failures.
+            return
+
+    thread = threading.Thread(target=refresh, name="openfars-model-registry", daemon=True)
+    thread.start()
+    return thread
 
 
 def _secret_like(path: Path) -> bool:

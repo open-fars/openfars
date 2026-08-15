@@ -29,6 +29,31 @@ class ResultEvaluator:
                 "claim_status": "unsupported",
                 "source": "deterministic_guard",
             }
+        if status == "infrastructure_smoke":
+            return {
+                "verdict": "stop",
+                "quality": 0,
+                "reason": "Infrastructure smoke tests are not scientific evidence.",
+                "next_step": "Run the approved experiment before evaluating the claim.",
+                "claim_status": "unsupported",
+                "source": "deterministic_guard",
+            }
+        if status in {
+            "remote_command_failed",
+            "missing_remote_result_contract",
+            "missing_result_contract",
+        }:
+            return {
+                "verdict": "iterate",
+                "quality": 0,
+                "reason": (
+                    "Execution did not produce a successful machine-readable result; "
+                    "reported metrics cannot support the claim."
+                ),
+                "next_step": "Repair the execution/result contract before changing the hypothesis.",
+                "claim_status": "inconclusive",
+                "source": "deterministic_guard",
+            }
         decision = result.get("decision")
         if isinstance(decision, dict) and isinstance(decision.get("passed"), bool):
             passed = decision["passed"]

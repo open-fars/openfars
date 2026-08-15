@@ -184,4 +184,6 @@ The initial routing uses current public model IDs and official capability report
 Run `openfars models-refresh --force` to cache the configured feeds. The subscriber covers
 Artificial Analysis, SWE-bench, Terminal-Bench, PaperBench, DeepResearch Bench,
 LiveResearchBench, and media arenas. It writes an advisory report under
-`outputs/_model_registry/leaderboards/`; it never edits `openfars.yaml`.
+`outputs/_model_registry/leaderboards/`; it never edits `openfars.yaml`. Starting the WebUI
+refreshes a stale snapshot in the background and exposes only route names, model IDs and feed
+status to the browser—never credentials.

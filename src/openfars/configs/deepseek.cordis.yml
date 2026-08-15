@@ -20,7 +20,9 @@
 - id: sandbox-policy
   name: '@deepseek-ai/dsh-sandbox-policy'
   config:
-    mode: workspace-write
+    # Fail-closed default. A disposable/containerized deployment may explicitly
+    # set danger-full-access when the host exposes no usable OS sandbox backend.
+    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
     workspaceRoot: !!js process.env.DSH_CWD ?? process.cwd()
 - id: subprocess
   name: '@deepseek-ai/dsh-subprocess-local'
@@ -37,7 +39,8 @@
     includeHarnessIdentity: true
     includeRuntimeContext: true
     persona: !!js process.env.DSH_SYSTEM_PROMPT ?? 'You are a careful research engineer.'
-    workspaceContext: true
+    workspaceContext:
+      maxBytes: 16000
     skills:
       enabled: false
     toolBash: false

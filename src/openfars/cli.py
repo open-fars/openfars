@@ -57,6 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     decide.add_argument("checkpoint", choices=["idea", "plan", "results", "publication"])
     action = decide.add_mutually_exclusive_group(required=True)
     action.add_argument("--approve", action="store_true")
+    action.add_argument("--revise", action="store_true")
     action.add_argument("--reject", action="store_true")
     decide.add_argument("--select", dest="selected_id")
     decide.add_argument("--feedback", default="")
@@ -169,7 +170,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         write_decision(
             workspace,
             args.checkpoint,
-            action="approve" if args.approve else "reject",
+            action="approve" if args.approve else "revise" if args.revise else "reject",
             selected_id=args.selected_id,
             feedback=args.feedback,
             overrides=_parse_overrides(args.set),

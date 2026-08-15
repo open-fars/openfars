@@ -46,6 +46,12 @@ OpenFARS is smaller than Harness: it does not yet load arbitrary third-party bro
 offer full bidirectional RPC. That boundary is deliberate until plugin signing, capability
 declarations and authorization are designed.
 
+The Harness route fails closed if the OS cannot enforce `workspace-write`. A route may explicitly
+set `permission_mode: danger-full-access` only when its entire runtime is already isolated and
+disposable; there is no automatic downgrade. The offline Harness smoke uses that explicit mode
+against a loopback fake provider and a fixed command, allowing the full SDK→Cordis→Bash→session
+path to be tested without a real credential or external model call.
+
 ## Workflow state machine
 
 ```text
@@ -69,6 +75,9 @@ causal divergence operators. Candidates are deduplicated, checked against nearby
 blind-scored by heterogeneous judges, penalized for fatal flaws/disagreement, and stored in a
 quality-diversity archive keyed by paradigm and resource profile. Human review sees the frontier,
 falsifier, nearby evidence and judge spread—not the conversation.
+An idea decision may approve, reject, or `revise`. Revision archives the old portfolio and decision,
+injects the short human gradient into a new operator/model search round, independently re-runs the
+critic, and returns another bounded frontier. It does not ask the human to read or edit transcripts.
 
 ## Experiment and remote compute boundary
 
@@ -81,6 +90,21 @@ work directory.
 Each iteration has its own result, agent response, stdout, stderr and evaluation. An executable
 decision object beats LLM judgment. `iterate` carries one minimal next step into the same durable
 experimenter session; max iterations and the preregistered stop conditions remain hard limits.
+For SSH targets, OpenFARS removes copied/stale result contracts before the configured command,
+archives the returned project, and evaluates only the remote contract. A missing contract or
+non-zero command deterministically triggers repair/iteration rather than model-based advancement.
+The remote process receives explicit project/iteration plus output, dataset and model directory
+environment variables. Large checkpoints stay under the configured project output directory;
+the small result contract remains in the synchronized project so it can be evaluated immediately.
+
+## Media production boundary
+
+The podcaster and video producer first create evidence-linked source packages so a human can audit
+every claim before synthesis. Optional render commands are argument arrays, never shell strings;
+OpenFARS substitutes only workspace/package/output paths, executes the renderer, checks the binary,
+and records a checksum receipt. Raw renderer logs remain under `sessions/` and are excluded from
+the browser and release object. This supports local or GPU-installed FireRedTTS2, Remotion/ffmpeg,
+and future renderers without coupling the research controller to one media stack.
 
 ## Publication boundary
 

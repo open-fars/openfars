@@ -23,7 +23,15 @@ class PublicationError(RuntimeError):
 class ReleaseBuilder:
     """Build a FAIR-ish, reviewable research object before any external write."""
 
-    SAFE_ROOTS = ("artifacts", "code", "paper", "visualizations", "media", "reports")
+    SAFE_ROOTS = (
+        "artifacts",
+        "code",
+        "paper",
+        "visualizations",
+        "media",
+        "reports",
+        "handoffs",
+    )
     SECRET_NAMES = {".env", "wandb_config.yml", "credentials.json", "credentials.yaml"}
 
     def __init__(

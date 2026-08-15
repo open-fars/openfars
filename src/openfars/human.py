@@ -28,8 +28,8 @@ class Decision:
     @classmethod
     def from_dict(cls, raw: Mapping[str, Any]) -> "Decision":
         action = str(raw.get("action", "")).lower()
-        if action not in {"approve", "reject"}:
-            raise ValueError("Decision action must be approve or reject")
+        if action not in {"approve", "reject", "revise"}:
+            raise ValueError("Decision action must be approve, reject, or revise")
         overrides = raw.get("overrides") or {}
         if not isinstance(overrides, dict):
             raise ValueError("Decision overrides must be a JSON object")
@@ -62,6 +62,10 @@ class HumanGate:
         existing = self.workspace.read_json(decision_path)
         if existing is not None:
             decision = Decision.from_dict(existing)
+            if decision.action == "revise" and checkpoint != "idea":
+                raise ValueError("Only the idea checkpoint supports revision")
+            if decision.action == "revise" and not decision.feedback.strip():
+                raise ValueError("Idea revision requires a short steering feedback gradient")
             self.workspace.append_event(
                 "human.decision",
                 {
@@ -77,7 +81,11 @@ class HumanGate:
             "checkpoint": checkpoint,
             "project_id": self.workspace.project_id,
             "default_selected_id": default_selected_id,
-            "allowed_actions": ["approve", "reject"],
+            "allowed_actions": (
+                ["approve", "revise", "reject"]
+                if checkpoint == "idea"
+                else ["approve", "reject"]
+            ),
             "payload": payload,
         }
         self.workspace.write_json(f"decisions/{checkpoint}.request.json", request)
@@ -94,10 +102,18 @@ class HumanGate:
     def _ask_cli(self, checkpoint: str, default_selected_id: Optional[str]) -> Decision:
         packet = self.workspace.path(f"decisions/{checkpoint}.packet.md")
         print(f"\nHuman checkpoint: {checkpoint}\nDecision packet: {packet}")
-        answer = input("Approve? [Y/n] ").strip().lower()
-        action = "reject" if answer in {"n", "no"} else "approve"
+        answer = input("Approve, revise, or reject? [Y/r/n] ").strip().lower()
+        action = (
+            "reject"
+            if answer in {"n", "no"}
+            else "revise"
+            if answer in {"r", "revise"}
+            else "approve"
+        )
         selected = input(f"Selected ID [{default_selected_id or ''}]: ").strip()
         feedback = input("Short steering feedback (optional): ").strip()
+        if action == "revise" and not feedback:
+            raise ValueError("Idea revision requires a short steering feedback gradient")
         decision = Decision(action, selected or default_selected_id, feedback)
         self.workspace.write_json(f"decisions/{checkpoint}.decision.json", asdict(decision))
         return decision
@@ -123,6 +139,10 @@ def write_decision(
             "overrides": dict(overrides or {}),
         }
     )
+    if decision.action == "revise" and checkpoint != "idea":
+        raise ValueError("Only the idea checkpoint supports revision")
+    if decision.action == "revise" and not decision.feedback.strip():
+        raise ValueError("Idea revision requires a short steering feedback gradient")
     workspace.write_json(f"decisions/{checkpoint}.decision.json", asdict(decision))
 
 
@@ -166,4 +186,15 @@ def render_packet(
             "```",
         ]
     )
+    if checkpoint == "idea":
+        lines.extend(
+            [
+                "",
+                "To move the search frontier instead of selecting it:",
+                "",
+                "```bash",
+                f'openfars decide {payload.get("project_id", "<project>")} idea --revise --feedback "seek a cheaper causal falsifier"',
+                "```",
+            ]
+        )
     return "\n".join(lines) + "\n"

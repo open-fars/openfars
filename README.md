@@ -80,6 +80,21 @@ openfars models-refresh --config openfars.local.yaml --force
 ```
 
 Snapshots are advisory and never silently rewrite model routes.
+The WebUI refreshes stale subscriptions in the background; CLI-only users can run the command
+above explicitly.
+
+Podcast and video agents always produce evidence-linked, human-reviewable source packages. To
+also render final binaries, configure shell-free argument lists using `{package}`, `{output}` and
+`{workspace}` placeholders:
+
+```yaml
+media:
+  podcast_render_command: [python, tools/render_podcast.py, --input, "{package}", --output, "{output}"]
+  video_render_command: [node, tools/render_video.mjs, --storyboard, "{package}", --output, "{output}"]
+```
+
+Renderer stdout/stderr stays in non-published session logs; the release contains only the binary,
+its checksum and a redacted render receipt.
 
 ## Remote GPU experiments
 
@@ -107,6 +122,16 @@ openfars remote-probe gpu-lab --config openfars.local.yaml
 
 OpenFARS calls system `ssh`/`rsync`; it does not read or upload private-key bytes. See
 [examples/remote-gpu.example.yaml](examples/remote-gpu.example.yaml).
+Remote result contracts are cleared before execution, pulled back after the command, and take
+precedence over any controller-side draft; failed commands can never produce an advance verdict.
+The command receives `OPENFARS_REMOTE_OUTPUT_DIR`, `OPENFARS_DATASETS_DIR`,
+`OPENFARS_MODELS_DIR`, `OPENFARS_PROJECT_ID`, and `OPENFARS_ITERATION`; checkpoints and large
+artifacts should go to the output directory rather than the synchronized code workspace.
+
+Harness defaults to fail-closed `workspace-write`, which requires a usable bubblewrap/Landlock
+(Linux) or sandbox-exec (macOS) backend. Only for an already isolated disposable environment,
+opt in explicitly on that model route with `permission_mode: danger-full-access`; OpenFARS never
+falls back automatically.
 
 ## Run, review, publish
 
@@ -114,6 +139,8 @@ OpenFARS calls system `ssh`/`rsync`; it does not read or upload private-key byte
 openfars run --config openfars.local.yaml --topic "your broad direction"
 openfars status <project-id> --config openfars.local.yaml
 openfars decide <project-id> idea --approve --select <idea-id> --feedback "..."
+# Or move the whole frontier; prior candidates and feedback remain archived.
+openfars decide <project-id> idea --revise --feedback "seek a cheaper causal falsifier"
 
 # Local bundle only; no external write.
 openfars bundle <project-id> --config openfars.local.yaml
@@ -135,7 +162,9 @@ GitHub publication is restricted to authenticated account `Dingrui-Wang`; the re
 ```bash
 pip install -e '.[dev]'
 pytest
-ruff check src tests run.py
+ruff check src tests scripts run.py
+# With the Harness extra installed; uses only a loopback fake provider.
+python scripts/harness_smoke.py
 ```
 
 MIT licensed. AI-generated research artifacts must disclose AI assistance and remain subject to

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import uuid
 from typing import Any, Dict, Mapping, Optional, Sequence
 
@@ -85,6 +86,19 @@ class ResearchOrchestrator:
             runtime.run("explorer", {"topics": topics})
             self._transition(workspace, state, "ideas_ready")
 
+        if state["stage"] == "revising_ideas":
+            revisions = state.get("idea_revisions", [])
+            feedback = str(revisions[-1].get("feedback", "")) if revisions else ""
+            runtime.run(
+                "explorer",
+                {
+                    "topics": topics,
+                    "human_feedback": feedback,
+                    "revision": len(revisions),
+                },
+            )
+            self._transition(workspace, state, "ideas_ready")
+
         if state["stage"] == "ideas_ready":
             runtime.run("critic", {})
             self._transition(workspace, state, "critique_ready")
@@ -103,6 +117,19 @@ class ResearchOrchestrator:
                 },
                 default_selected_id=default_id,
             )
+            if decision.action == "revise":
+                revision = len(state.setdefault("idea_revisions", [])) + 1
+                self._archive_idea_revision(workspace, revision)
+                state["idea_revisions"].append(
+                    {"revision": revision, "feedback": decision.feedback}
+                )
+                workspace.append_event(
+                    "human.idea_revision",
+                    {"revision": revision, "has_feedback": bool(decision.feedback)},
+                )
+                self._transition(workspace, state, "revising_ideas")
+                self._advance(runtime, gate, state, topics)
+                return
             if decision.action == "reject":
                 self._transition(workspace, state, "rejected")
                 return
@@ -182,17 +209,6 @@ class ResearchOrchestrator:
 
         if state["stage"] == "podcast_ready":
             runtime.run("video_producer", {})
-            workspace.write_json(
-                "media/manifest.json",
-                {
-                    "podcast": "media/podcast/package.json"
-                    if workspace.path("media/podcast/package.json").exists()
-                    else "disabled",
-                    "video": "media/video/storyboard.json"
-                    if workspace.path("media/video/storyboard.json").exists()
-                    else "disabled",
-                },
-            )
             self._transition(workspace, state, "media_ready")
 
         if state["stage"] == "media_ready":
@@ -321,6 +337,22 @@ class ResearchOrchestrator:
         )
         self._transition(workspace, state, "created")
         return state
+
+    @staticmethod
+    def _archive_idea_revision(workspace: Workspace, revision: int) -> None:
+        root = f"artifacts/idea_revisions/{revision:03d}"
+        for relative in ("artifacts/ideas.json", "artifacts/critical_review.json"):
+            source = workspace.path(relative)
+            if source.is_file():
+                destination = workspace.path(f"{root}/{source.name}")
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
+        history = workspace.path("decisions/history")
+        history.mkdir(parents=True, exist_ok=True)
+        for suffix in ("request.json", "decision.json", "packet.md"):
+            source = workspace.path(f"decisions/idea.{suffix}")
+            if source.exists():
+                source.replace(history / f"idea-{revision:03d}.{suffix}")
 
     @staticmethod
     def _install_policies(runtime: PluginRuntime) -> None:
