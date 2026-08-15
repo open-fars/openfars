@@ -29,7 +29,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-openfars = ["configs/*.yml", "web/*.html"]
+openfars = ["configs/*.yml", "web/*.html", "web/*.js", "web/*.txt"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

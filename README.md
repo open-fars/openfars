@@ -24,8 +24,8 @@ direction → literature → exploration → critique → task → plan
   composition, sandboxed tools, lifecycle events and workspace permissions.
 - **Real research infrastructure:** SSH GPU execution, append-only traces, failed-run retention,
   deterministic plots and evidence-locked citations.
-- **Local WebUI:** live agent pipeline, SSE event stream, artifacts and human approvals; secrets
-  never enter the browser.
+- **Local 3D WebUI:** a lightweight office shows all 13 agents walking, working and handing off
+  tasks alongside the SSE event stream, artifacts and human approvals; secrets never enter the browser.
 - **Safe one-click openness:** checksums, cards, RO-Crate and explicit, identity-verified publishing
   to GitHub, Hugging Face and ModelScope.
 
