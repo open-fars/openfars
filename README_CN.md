@@ -30,12 +30,16 @@ OpenFARS 会为每个研究阶段选择最合适的模型，探索既有质量�
 
 ## 快速开始
 
-需要 Python 3.10 或更高版本。
+请先安装 Miniconda。下面的命令会创建一个独立的 Python 3.11 环境
+（OpenFARS 支持 Python 3.10 及以上版本）。
 
 ```bash
+conda create -n openfars python=3.11 -y
+conda activate openfars
+
 git clone https://github.com/open-fars/openfars.git
 cd openfars
-pip install -e .
+python -m pip install -e .
 
 # 不需要 API Key。它会走完整个流程，但不会假装产生了实验结果。
 openfars web --config examples/offline.yaml
@@ -44,7 +48,7 @@ openfars web --config examples/offline.yaml
 如果要使用前沿模型：
 
 ```bash
-pip install -e '.[models,harness,publish]'
+python -m pip install -e '.[models,harness,publish]'
 cp openfars.yaml openfars.local.yaml
 export OPENAI_API_KEY=...
 export ANTHROPIC_API_KEY=...
@@ -159,7 +163,7 @@ GitHub 发布只允许已认证的 `Dingrui-Wang` 账号，仓库所有者为 `o
 - [Auto-research 的不足、OpenClaw 的启发和产品思路](docs/PRODUCT_THESIS.md)
 
 ```bash
-pip install -e '.[dev]'
+python -m pip install -e '.[dev]'
 pytest
 ruff check src tests scripts run.py
 # 需要安装 Harness extra；测试只会使用本机回环的模拟服务。

@@ -31,12 +31,16 @@ direction → literature → exploration → critique → task → plan
 
 ## Quickstart
 
-Requires Python 3.10+.
+Install Miniconda first. The commands below create an isolated Python 3.11 environment
+(OpenFARS supports Python 3.10+).
 
 ```bash
+conda create -n openfars python=3.11 -y
+conda activate openfars
+
 git clone https://github.com/open-fars/openfars.git
 cd openfars
-pip install -e .
+python -m pip install -e .
 
 # Zero-key demo: completes the workflow but never simulates experimental evidence.
 openfars web --config examples/offline.yaml
@@ -45,7 +49,7 @@ openfars web --config examples/offline.yaml
 For frontier routes:
 
 ```bash
-pip install -e '.[models,harness,publish]'
+python -m pip install -e '.[models,harness,publish]'
 cp openfars.yaml openfars.local.yaml
 export OPENAI_API_KEY=...
 export ANTHROPIC_API_KEY=...
@@ -162,7 +166,7 @@ GitHub publication is restricted to authenticated account `Dingrui-Wang`; the re
 - [Auto-research gaps, OpenClaw lessons and product thesis](docs/PRODUCT_THESIS.md)
 
 ```bash
-pip install -e '.[dev]'
+python -m pip install -e '.[dev]'
 pytest
 ruff check src tests scripts run.py
 # With the Harness extra installed; uses only a loopback fake provider.
