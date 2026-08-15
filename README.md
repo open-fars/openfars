@@ -46,10 +46,9 @@ python -m pip install -e .
 openfars web --config examples/offline.yaml
 ```
 
-Open `http://127.0.0.1:8765` to enter the research office. The WebUI keeps the task graph,
-13 agent desks, live handoffs, events, artifacts, model routes and human decisions in one place.
-Click a person or workflow stage to inspect progress or ask that agent a question. Appearance and
-movement are adjustable; when WebGL is unavailable, every desk remains accessible in the 2D fallback.
+Open `http://127.0.0.1:8765`. The lightweight 3D office puts 13 clickable agents, the task graph,
+live events and handoffs, artifacts, model routes and human decisions in one view. Appearance and
+movement are adjustable; without WebGL, the same desks remain available in 2D.
 
 For frontier routes:
 
@@ -94,18 +93,8 @@ Snapshots are advisory and never silently rewrite model routes.
 The WebUI refreshes stale subscriptions in the background; CLI-only users can run the command
 above explicitly.
 
-Podcast and video agents always produce evidence-linked, human-reviewable source packages. To
-also render final binaries, configure shell-free argument lists using `{package}`, `{output}` and
-`{workspace}` placeholders:
-
-```yaml
-media:
-  podcast_render_command: [python, tools/render_podcast.py, --input, "{package}", --output, "{output}"]
-  video_render_command: [node, tools/render_video.mjs, --storyboard, "{package}", --output, "{output}"]
-```
-
-Renderer stdout/stderr stays in non-published session logs; the release contains only the binary,
-its checksum and a redacted render receipt.
+Podcast and video agents produce evidence-linked, reviewable source packages. Optional renderers
+use shell-free argument lists; their logs stay out of the release bundle.
 
 ## Remote GPU experiments
 
@@ -131,18 +120,9 @@ export OPENFARS_SSH_KEY=/Users/xxx/.ssh/id_ed25519_xxx
 openfars remote-probe gpu-lab --config openfars.local.yaml
 ```
 
-OpenFARS calls system `ssh`/`rsync`; it does not read or upload private-key bytes. See
-[examples/remote-gpu.example.yaml](examples/remote-gpu.example.yaml).
-Remote result contracts are cleared before execution, pulled back after the command, and take
-precedence over any controller-side draft; failed commands can never produce an advance verdict.
-The command receives `OPENFARS_REMOTE_OUTPUT_DIR`, `OPENFARS_DATASETS_DIR`,
-`OPENFARS_MODELS_DIR`, `OPENFARS_PROJECT_ID`, and `OPENFARS_ITERATION`; checkpoints and large
-artifacts should go to the output directory rather than the synchronized code workspace.
-
-Harness defaults to fail-closed `workspace-write`, which requires a usable bubblewrap/Landlock
-(Linux) or sandbox-exec (macOS) backend. Only for an already isolated disposable environment,
-opt in explicitly on that model route with `permission_mode: danger-full-access`; OpenFARS never
-falls back automatically.
+OpenFARS calls system `ssh`/`rsync` without reading or uploading private-key bytes. It clears stale
+remote results before each run and never advances after a failed command. See the
+[remote GPU example](examples/remote-gpu.example.yaml) and [sandbox design](docs/ARCHITECTURE.md).
 
 ## Run, review, publish
 

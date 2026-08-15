@@ -45,10 +45,9 @@ python -m pip install -e .
 openfars web --config examples/offline.yaml
 ```
 
-打开 `http://127.0.0.1:8765` 就能进入研究办公室。任务流程、13 个 Agent 的工位、实时交接、
-事件、产物、模型路由和人工决策都放在同一个页面里。点击人物或流程阶段，可以查看进展，
-也可以直接向对应的 Agent 提问。界面的配色和人物走动都能调整；如果浏览器无法使用 WebGL，
-所有工位仍然可以在 2D 备用界面中打开。
+打开 `http://127.0.0.1:8765`。轻量的 3D 办公室把 13 个可点击的 Agent、任务流程、实时事件
+和交接、研究产物、模型路由与人工决策放在同一个页面里。界面的配色和人物走动都能调整；
+浏览器没有 WebGL 时，同样可以在 2D 界面打开所有工位。
 
 如果要使用前沿模型：
 
@@ -91,18 +90,8 @@ openfars models-refresh --config openfars.local.yaml --force
 这些快照只提供参考，不会在背后自动修改模型路由。WebUI 会在后台刷新已经过期的订阅；
 只使用命令行时，也可以手动运行上面的命令。
 
-播客和视频 Agent 始终会先生成带有证据链接、可以由人审核的制作包。如果还需要渲染最终
-文件，可以用 `{package}`、`{output}` 和 `{workspace}` 占位符配置参数列表，
-不需要拼接 Shell 命令：
-
-```yaml
-media:
-  podcast_render_command: [python, tools/render_podcast.py, --input, "{package}", --output, "{output}"]
-  video_render_command: [node, tools/render_video.mjs, --storyboard, "{package}", --output, "{output}"]
-```
-
-渲染器的标准输出和错误输出只保存在不会发布的会话日志里；发布包只包含最终文件、校验和
-以及脱敏后的渲染记录。
+播客和视频 Agent 会生成带有证据链接、可以审核的制作包。可选渲染器使用不经过 Shell
+拼接的参数列表，运行日志不会进入发布包。
 
 ## 远程 GPU 实验
 
@@ -127,19 +116,9 @@ export OPENFARS_SSH_KEY=/Users/xxx/.ssh/id_ed25519_xxx
 openfars remote-probe gpu-lab --config openfars.local.yaml
 ```
 
-OpenFARS 调用系统自带的 `ssh` 和 `rsync`，不会读取或上传私钥内容。配置示例见
-[examples/remote-gpu.example.yaml](examples/remote-gpu.example.yaml)。
-
-每次执行前，旧的远程结果文件都会先被清除；命令结束后，新结果会拉回本地，并优先于控制端
-生成的草稿。只要命令执行失败，系统就不会给出“继续推进”的结论。远程命令可以读取
-`OPENFARS_REMOTE_OUTPUT_DIR`、`OPENFARS_DATASETS_DIR`、`OPENFARS_MODELS_DIR`、
-`OPENFARS_PROJECT_ID` 和 `OPENFARS_ITERATION`。检查点和大型文件应保存在输出目录，
-不要放进同步的代码工作区。
-
-Harness 默认采用 fail-closed 的 `workspace-write` 权限，因此需要 Linux 上可用的
-bubblewrap/Landlock，或 macOS 上的 sandbox-exec。只有环境本身已经隔离、并且用完即可
-销毁时，才应在对应的模型路由中明确设置 `permission_mode: danger-full-access`；
-OpenFARS 不会自动降低安全限制。
+OpenFARS 调用系统自带的 `ssh` 和 `rsync`，不会读取或上传私钥内容。每次运行前会清理旧的
+远程结果，命令失败时不会继续推进。具体配置和权限边界见[远程 GPU 示例](examples/remote-gpu.example.yaml)
+与[沙箱设计](docs/ARCHITECTURE.md)。
 
 ## 运行、审核和发布
 
