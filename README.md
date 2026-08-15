@@ -1,5 +1,7 @@
 # OpenFARS
 
+[English](README.md) | [简体中文](README_CN.md)
+
 **A local-first, multi-agent research OS for ideas beyond the average.**
 
 OpenFARS routes each research stage to the model best suited to it, searches a
