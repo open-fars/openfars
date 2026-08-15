@@ -1,0 +1,28 @@
+# Deterministic zero-key demonstration. It never simulates experimental evidence.
+models:
+  mock: {backend: mock, model: offline/mock}
+
+agents:
+  director: {model: mock}
+  librarian: {model: mock}
+  explorer: {model: mock, model_pool: [mock]}
+  critic: {model: mock}
+  reviewer: {model: mock}
+  task_designer: {model: mock}
+  planner: {model: mock}
+  experimenter: {model: mock}
+  evaluator: {model: mock}
+  visualizer: {model: mock}
+  writer: {model: mock}
+  podcaster: {model: mock}
+  video_producer: {model: mock}
+  publisher: {model: mock}
+
+search: {candidates: 8, finalists: 3, concurrency: 4, judges: [critic, reviewer]}
+human: {mode: "off", checkpoints: []}
+evidence: {enabled: false}
+execution: {enabled: false, max_iterations: 1}
+media: {enabled: true, podcast: true, video: true}
+leaderboards: {enabled: false}
+release: {bundle: true, github_account: Dingrui-Wang, github_owner: open-fars, github_repository: openfars}
+runtime: {output_dir: ../outputs, seed: 17}

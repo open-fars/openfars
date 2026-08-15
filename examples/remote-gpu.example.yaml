@@ -1,0 +1,20 @@
+# Keep the real version in openfars.local.yaml. The private key stays on this machine.
+compute:
+  targets:
+    gpu-lab:
+      host: 121.89.85.xxx
+      user: root
+      port: 32430
+      identity_file_env: OPENFARS_SSH_KEY
+      workdir: /data/dingrui/code/openfars
+      output_dir: /data/dingrui/output
+      datasets_dir: /data/dingrui/datasets
+      models_dir: /data/dingrui/models
+      strict_host_key_checking: true
+
+execution:
+  enabled: true
+  agent: experimenter
+  target: gpu-lab
+  command: python3 code/experiment.py
+  timeout: 86400

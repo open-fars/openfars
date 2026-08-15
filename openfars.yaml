@@ -1,0 +1,119 @@
+# Best-of-breed defaults as of 2026-08-15. Keys are read only from environment variables.
+models:
+  gpt56_sol:
+    backend: litellm
+    model: openai/gpt-5.6-sol
+    api_key_env: OPENAI_API_KEY
+    temperature: null
+    max_tokens: 32768
+    reasoning_effort: high
+  gpt56_sol_max:
+    backend: litellm
+    model: openai/gpt-5.6-sol
+    api_key_env: OPENAI_API_KEY
+    temperature: null
+    max_tokens: 65536
+    reasoning_effort: max
+  gpt56_luna:
+    backend: litellm
+    model: openai/gpt-5.6-luna
+    api_key_env: OPENAI_API_KEY
+    temperature: null
+    max_tokens: 8192
+    reasoning_effort: medium
+  claude_opus:
+    backend: litellm
+    model: anthropic/claude-opus-4-8
+    api_key_env: ANTHROPIC_API_KEY
+    temperature: 0.4
+    max_tokens: 32768
+  gemini_flash:
+    backend: litellm
+    model: gemini/gemini-3.6-flash
+    api_key_env: GEMINI_API_KEY
+    temperature: null
+    max_tokens: 32768
+  deepseek_v4:
+    backend: litellm
+    model: deepseek/deepseek-v4-pro
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.7
+    max_tokens: 32768
+  deepseek_harness:
+    backend: deepseek-harness
+    model: deepseek-v4-pro
+    api_key_env: DEEPSEEK_API_KEY
+    provider: deepseek-official
+    temperature: null
+    max_tokens: 65536
+
+agents:
+  director:
+    model: gpt56_sol_max
+    system_prompt: Set a bounded research charter and expose only high-value human decisions.
+  librarian:
+    model: gpt56_sol
+    system_prompt: Build an evidence graph; separate retrieved fact, inference, contradiction, and uncertainty.
+  explorer:
+    model: claude_opus
+    model_pool: [gpt56_sol, gemini_flash, deepseek_v4]
+    system_prompt: Use causal divergence operators to propose risky, falsifiable hypotheses rather than fluent variations.
+  critic:
+    model: gpt56_sol_max
+    system_prompt: Blindly attack confounders, novelty claims, and measurement validity.
+  reviewer:
+    model: gemini_flash
+    system_prompt: Provide an independent, source-blind second judgment and preserve disagreement.
+  task_designer:
+    model: gpt56_sol_max
+    system_prompt: Convert hypotheses into executable decision rules and informative failure conditions.
+  planner:
+    model: claude_opus
+    system_prompt: Preregister the cheapest decisive experiment, controls, seeds, and stop conditions.
+  experimenter:
+    model: deepseek_harness
+    system_prompt: Inspect, implement, execute, debug, and preserve reproducible evidence through a durable harness session.
+  evaluator:
+    model: gpt56_sol_max
+    system_prompt: Apply executable rules first; distinguish supported, refuted, and inconclusive claims.
+  visualizer:
+    model: gpt56_sol
+    system_prompt: Produce data-linked declarative figures and audit every visual claim.
+  writer:
+    model: claude_opus
+    system_prompt: Write clear scientific prose from the immutable evidence ledger only.
+  podcaster:
+    model: claude_opus
+    system_prompt: Turn verified claims into an engaging disclosed dialogue without voice impersonation.
+  video_producer:
+    model: gemini_flash
+    system_prompt: Storyboard source-linked charts and diagrams; never fabricate experimental footage.
+  publisher:
+    model: gpt56_luna
+    system_prompt: Prepare reproducible release metadata; external writes always require explicit human authorization.
+
+search:
+  candidates: 12
+  finalists: 4
+  concurrency: 6
+  judges: [critic, reviewer]
+
+human:
+  mode: file
+  checkpoints: [idea, plan, results, publication]
+  packet_candidates: 4
+
+evidence: {enabled: true, provider: openalex, papers_per_query: 10, timeout: 20}
+execution: {enabled: true, agent: experimenter, max_iterations: 4}
+media: {enabled: true, podcast: true, video: true}
+leaderboards:
+  enabled: true
+  refresh_hours: 24
+  sources: [artificial-analysis, swe-bench, deepresearch-bench, terminal-bench, paperbench, live-research-bench, artificial-analysis-media]
+release:
+  bundle: true
+  github_account: Dingrui-Wang
+  github_owner: open-fars
+  github_repository: openfars
+web: {host: 127.0.0.1, port: 8765, open_browser: true, event_poll_ms: 750}
+runtime: {output_dir: outputs, seed: 17}

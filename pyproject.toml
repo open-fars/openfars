@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openfars"
+version = "0.2.0"
+description = "A multi-model, human-steered operating system for autonomous research"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Dingrui-Wang", email = "dingrui.wang17@gmail.com"}]
+dependencies = ["PyYAML>=6.0", "requests>=2.31"]
+
+[project.optional-dependencies]
+models = ["litellm>=1.70"]
+harness = ["deepseek-harness-sdk"]
+publish = ["huggingface-hub>=0.28", "modelscope-hub>=0.1"]
+dev = ["pytest>=8", "ruff>=0.11"]
+all = ["litellm>=1.70", "deepseek-harness-sdk", "huggingface-hub>=0.28", "modelscope-hub>=0.1"]
+
+[project.scripts]
+openfars = "openfars.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openfars = ["configs/*.yml", "web/*.html"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "SIM"]
+ignore = ["E501"]

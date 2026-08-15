@@ -1,9 +1,2 @@
-openai
-pyyaml
-requests
-arxiv
-beautifulsoup4
-tenacity
-pandas
-numpy
-tqdm
+PyYAML>=6.0
+requests>=2.31

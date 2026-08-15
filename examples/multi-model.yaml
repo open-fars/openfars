@@ -1,0 +1,30 @@
+# The maintained frontier profile is the repository root openfars.yaml.
+# Copy it to openfars.local.yaml, tune routes with your own evals, and export API keys.
+# This smaller profile demonstrates provider diversity without DeepSeek Harness.
+models:
+  reasoning: {backend: litellm, model: openai/gpt-5.6-sol, api_key_env: OPENAI_API_KEY, temperature: null, reasoning_effort: high}
+  creative: {backend: litellm, model: anthropic/claude-opus-4-8, api_key_env: ANTHROPIC_API_KEY, temperature: 0.5}
+  multimodal: {backend: litellm, model: gemini/gemini-3.6-flash, api_key_env: GEMINI_API_KEY, temperature: null}
+  open: {backend: litellm, model: deepseek/deepseek-v4-pro, api_key_env: DEEPSEEK_API_KEY}
+
+agents:
+  director: {model: reasoning}
+  librarian: {model: reasoning}
+  explorer: {model: creative, model_pool: [reasoning, multimodal, open]}
+  critic: {model: reasoning}
+  reviewer: {model: multimodal}
+  task_designer: {model: reasoning}
+  planner: {model: creative}
+  experimenter: {model: open}
+  evaluator: {model: reasoning}
+  visualizer: {model: multimodal}
+  writer: {model: creative}
+  podcaster: {model: creative}
+  video_producer: {model: multimodal}
+  publisher: {model: multimodal}
+
+search: {candidates: 12, finalists: 4, concurrency: 6, judges: [critic, reviewer]}
+human: {mode: file, checkpoints: [idea, plan, results, publication]}
+evidence: {enabled: true, papers_per_query: 10}
+execution: {enabled: true, agent: experimenter, max_iterations: 4}
+runtime: {output_dir: ../outputs, seed: 17}
