@@ -5,7 +5,7 @@ from dataclasses import replace
 
 import pytest
 
-from openfars.config import EvidenceConfig, HumanConfig
+from openfars.config import EvidenceConfig, ExecutionConfig, HumanConfig
 from openfars.human import HumanDecisionRequired, write_decision
 from openfars.literature import Paper
 from openfars.orchestrator import ResearchOrchestrator
@@ -155,6 +155,46 @@ def test_human_feedback_revises_the_idea_frontier(offline_config):
     )
     completed = orchestrator.run([], project_id="idea-revision-test")
     assert completed.read_json("state.json")["stage"] == "complete"
+
+
+def test_failed_experiment_iterates_then_advances(offline_config, monkeypatch):
+    class TwoStepExperiment:
+        def __init__(self, config, router, workspace):
+            self.workspace = workspace
+
+        def run(self, task, plan, human_feedback="", *, iteration=1, history=()):
+            passed = iteration == 2
+            result = {
+                "success": passed,
+                "status": "completed",
+                "summary": "mechanism reproduced" if passed else "pilot missed threshold",
+                "metrics": {"score": 0.9 if passed else 0.2},
+                "artifacts": [],
+                "iteration": iteration,
+                "decision": {
+                    "passed": passed,
+                    "score": 9 if passed else 2,
+                    "reason": "preregistered threshold",
+                    "next_step": "repair instrumentation" if not passed else "",
+                },
+            }
+            self.workspace.write_json(
+                f"artifacts/iterations/{iteration:03d}/result.json", result
+            )
+            return result
+
+    monkeypatch.setattr("openfars.orchestrator.ExperimentRunner", TwoStepExperiment)
+    config = replace(
+        offline_config,
+        execution=ExecutionConfig(enabled=True, agent="experimenter", max_iterations=3),
+    )
+    workspace = ResearchOrchestrator(config).run(
+        ["bounded experiment iteration"], project_id="experiment-iteration-test"
+    )
+
+    history = workspace.read_json("artifacts/experiment_history.json")
+    assert [item["evaluation"]["verdict"] for item in history] == ["iterate", "advance"]
+    assert workspace.read_json("artifacts/experiment_result.json")["iterations"] == 2
 
 
 def _handoffs(workspace):
