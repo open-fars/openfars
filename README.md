@@ -46,6 +46,11 @@ python -m pip install -e .
 openfars web --config examples/offline.yaml
 ```
 
+Open `http://127.0.0.1:8765` to enter the research office. The WebUI keeps the task graph,
+13 agent desks, live handoffs, events, artifacts, model routes and human decisions in one place.
+Click a person or workflow stage to inspect progress or ask that agent a question. Appearance and
+movement are adjustable; when WebGL is unavailable, every desk remains accessible in the 2D fallback.
+
 For frontier routes:
 
 ```bash
