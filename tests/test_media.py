@@ -34,3 +34,29 @@ def test_podcast_renderer_creates_audited_binary(offline_config):
     receipt = workspace.read_json("media/podcast/render.json")
     assert receipt["output_sha256"]
     assert "command" not in receipt
+
+
+def test_video_renderer_creates_audited_binary(offline_config):
+    workspace = Workspace(offline_config.runtime.output_dir, "video-render-test")
+    config = MediaConfig(
+        video_render_command=[
+            sys.executable,
+            "-c",
+            (
+                "from pathlib import Path; import sys; "
+                "assert Path(sys.argv[1]).is_file(); "
+                "Path(sys.argv[2]).write_bytes(b'openfars-mp4')"
+            ),
+            "{package}",
+            "{output}",
+        ],
+        video_output="media/video/video.mp4",
+    )
+    producer = MediaProducer(config, ModelRouter(offline_config, workspace), workspace)
+
+    result = producer.run_video("# Paper", {"status": "test"}, [])
+
+    assert result["status"] == "rendered"
+    assert result["output"] == "media/video/video.mp4"
+    assert workspace.path(result["output"]).read_bytes() == b"openfars-mp4"
+    assert workspace.read_json("media/video/render.json")["output_sha256"]
